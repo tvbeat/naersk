@@ -65,6 +65,11 @@ let
     # Extra `buildInputs` to all derivations.
     buildInputs = attrs0.buildInputs or [];
 
+    # Extra `buildInputs` to all derivations.
+    builtDependencies = attrs0.builtDependencies or [];
+
+    cargoConfigExtra = attrs0.cargoConfigExtra or {};
+
     # Options passed to all cargo commands, i.e. `cargo <OPTS> ...`. These
     # options can be accessed during the build through the environment variable
     # `cargo_options`. <br/>
@@ -80,9 +85,12 @@ let
     release = attrs0.release or true;
     # An override for all derivations involved in the build.
     override = attrs0.override or (x: x);
-    # When true, no intermediary (dependency-only) build is run. Enabling
-    # `singleStep` greatly reduces the incrementality of the builds.
+    # when true, no intermediary (dependency-only) build is run. enabling
+    # `singlestep` greatly reduces the incrementality of the builds.
     singleStep = attrs0.singleStep or false;
+    # when true, no intermediary (dependency-only) build is run. enabling
+    # `singlestep` greatly reduces the incrementality of the builds.
+    depOnly = attrs0.depOnly or false;
     # The targets to build if the `Cargo.toml` is a virtual manifest.
     targets = attrs0.targets or null;
     # When true, the resulting binaries are copied to `$out/bin`. <br/>
@@ -198,6 +206,7 @@ let
 
       cargoBuild
       cargoBuildOptions
+      cargoConfigExtra
       remapPathPrefix
       copyBins
       copyBinsFilter
@@ -227,6 +236,9 @@ let
     inherit (sr) src root;
     # Whether we skip pre-building the deps
     isSingleStep = attrs.singleStep;
+
+    isDepOnly = attrs.depOnly;
+    builtDependencies = attrs.builtDependencies;
 
     # The members we want to build
     # (list of directory names)

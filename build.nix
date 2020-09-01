@@ -2,6 +2,7 @@
   #| What command to run during the build phase
 , cargoBuild
 , cargoBuildOptions
+, cargoConfigExtra
 , remapPathPrefix
 , #| What command to run during the test phase
   cargoTestCommands
@@ -140,15 +141,18 @@ let
       remapPathPrefix
       ;
 
+    passthru.crate_git_deps = gitDependenciesList;
     crate_sources = nixSourcesDir;
 
     # The cargo config with source replacement. Replaces both crates.io crates
     # and git dependencies.
-    cargoconfig = builtinz.toTOML {
-      source = {
+    cargoconfig =
+    let
+    cconfig = builtinz.toTOML {
+      source = cargoConfigExtra // {
         crates-io = { replace-with = "nix-sources"; };
         nix-sources = {
-          directory = nixSourcesDir;
+          directory = "%vendor%";
         };
       } // lib.listToAttrs (
         map
@@ -171,6 +175,8 @@ let
           gitDependenciesList
       );
     };
+    in builtins.trace cconfig cconfig;
+    #in cconfig;
 
     outputs = [ "out" ] ++ lib.optional (doDoc && copyDocsToSeparateOutput) "doc";
     preInstallPhases = lib.optional doDoc [ "docPhase" ];
@@ -254,7 +260,7 @@ let
         CARGO_BUILD_RUSTFLAGS="$CARGO_BUILD_RUSTFLAGS --remap-path-prefix $crate_sources=/sources"
         log "CARGO_BUILD_RUSTFLAGS (updated): $CARGO_BUILD_RUSTFLAGS"
       else
-        export CARGO_BUILD_RUSTFLAGS="--remap-path-prefix $crate_sources=/sources"
+        export CARGO_BUILD_RUSTFLAGS="--remap-path-prefix /build/vendor=/sources"
         log "CARGO_BUILD_RUSTFLAGS (updated): $CARGO_BUILD_RUSTFLAGS"
       fi
 
@@ -283,12 +289,18 @@ let
           if [ -d "$dep/target" ]; then
             chmod +w -R target
           fi
+
       done
 
       export CARGO_HOME=''${CARGO_HOME:-$PWD/.cargo-home}
       mkdir -p $CARGO_HOME
 
-      echo "$cargoconfig" > $CARGO_HOME/config
+      ln -vs ${nixSourcesDir} $CARGO_HOME/vendor
+
+      echo "$cargoconfig" | sed "s~%vendor%~$CARGO_HOME/vendor~" > $CARGO_HOME/config
+
+      echo home: $CARGO_HOME
+      cat $CARGO_HOME/config
 
       runHook postConfigure
     '';
@@ -297,6 +309,9 @@ let
 
       ''
         runHook preBuild
+
+        pwd
+        echo home2: $CARGO_HOME
 
         cargo_ec=0
         logRun ${cargoBuild} || cargo_ec="$?"
@@ -378,7 +393,8 @@ let
         ''}
 
         ${lib.optionalString copyTarget ''
-        mkdir -p $out
+        mkdir -p $out/.cargo
+        echo "$cargoconfig" > $out/.cargo/config
         ${if compressTarget then
         ''
           tar -c target | ${zstd}/bin/zstd -o $out/target.tar.zst

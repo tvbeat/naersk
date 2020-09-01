@@ -54,7 +54,7 @@ let
             copyBins = false;
             copyBinsFilter = ".";
             copyDocsToSeparateOutput = false;
-            builtDependencies = [];
+            builtDependencies = config.builtDependencies or [];
           };
 
       # the top-level build
@@ -63,9 +63,9 @@ let
           {
             pname = config.packageName;
             inherit (config) userAttrs src;
-            builtDependencies = lib.optional (! config.isSingleStep) buildDeps;
+            builtDependencies = config.builtDependencies ++ lib.optional (! config.isSingleStep) buildDeps;
           };
     in
-      buildTopLevel;
+      if config.isDepOnly then buildDeps else buildTopLevel;
 in
 { inherit buildPackage; }
