@@ -175,8 +175,8 @@ let
           gitDependenciesList
       );
     };
-    in builtins.trace cconfig cconfig;
-    #in cconfig;
+    #in builtins.trace cconfig cconfig;
+    in cconfig;
 
     outputs = [ "out" ] ++ lib.optional (doDoc && copyDocsToSeparateOutput) "doc";
     preInstallPhases = lib.optional doDoc [ "docPhase" ];
