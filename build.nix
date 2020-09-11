@@ -388,7 +388,7 @@ let
 
         ${lib.optionalString copyTarget ''
         # make sure crate is built from scratch
-        rm -rfv target/*/build/${packageName}-*
+        rm -rf target/*/build/${packageName}-*
 
         ${if compressTarget then
         ''
