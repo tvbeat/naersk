@@ -37,6 +37,7 @@
 , removeReferencesToSrcFromDocs
 , gitDependencies
 , pname
+, packageName
 , version
 , rustc
 , cargo
@@ -257,7 +258,7 @@ let
         RUSTFLAGS="$RUSTFLAGS --remap-path-prefix $crate_sources=/sources"
         log "RUSTFLAGS (updated): $RUSTFLAGS"
       elif [ -n "$CARGO_BUILD_RUSTFLAGS" ]; then
-        CARGO_BUILD_RUSTFLAGS="$CARGO_BUILD_RUSTFLAGS --remap-path-prefix $crate_sources=/sources"
+        CARGO_BUILD_RUSTFLAGS="$CARGO_BUILD_RUSTFLAGS --remap-path-prefix /build/vendor=/sources"
         log "CARGO_BUILD_RUSTFLAGS (updated): $CARGO_BUILD_RUSTFLAGS"
       else
         export CARGO_BUILD_RUSTFLAGS="--remap-path-prefix /build/vendor=/sources"
@@ -296,11 +297,7 @@ let
       mkdir -p $CARGO_HOME
 
       ln -vs ${nixSourcesDir} $CARGO_HOME/vendor
-
       echo "$cargoconfig" | sed "s~%vendor%~$CARGO_HOME/vendor~" > $CARGO_HOME/config
-
-      echo home: $CARGO_HOME
-      cat $CARGO_HOME/config
 
       runHook postConfigure
     '';
@@ -309,9 +306,6 @@ let
 
       ''
         runHook preBuild
-
-        pwd
-        echo home2: $CARGO_HOME
 
         cargo_ec=0
         logRun ${cargoBuild} || cargo_ec="$?"
@@ -393,8 +387,9 @@ let
         ''}
 
         ${lib.optionalString copyTarget ''
-        mkdir -p $out/.cargo
-        echo "$cargoconfig" > $out/.cargo/config
+        # make sure crate is built from scratch
+        rm -rfv target/*/build/${packageName}-*
+
         ${if compressTarget then
         ''
           tar -c target | ${zstd}/bin/zstd -o $out/target.tar.zst

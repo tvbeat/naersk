@@ -43,6 +43,7 @@ let
         build
           {
             pname = "${config.packageName}-deps";
+            packageName = config.packageName;
             src = libb.dummySrc {
               inherit cargoconfig;
               inherit (config) cargolock cargotomls patchedSources;
@@ -62,6 +63,7 @@ let
         build
           {
             pname = config.packageName;
+            packageName = config.packageName;
             inherit (config) userAttrs src;
             builtDependencies = config.builtDependencies ++ lib.optional (! config.isSingleStep) buildDeps;
           };
