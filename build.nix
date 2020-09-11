@@ -296,7 +296,7 @@ let
       export CARGO_HOME=''${CARGO_HOME:-$PWD/.cargo-home}
       mkdir -p $CARGO_HOME
 
-      ln -vs ${nixSourcesDir} $CARGO_HOME/vendor
+      ln -s ${nixSourcesDir} $CARGO_HOME/vendor
       echo "$cargoconfig" | sed "s~%vendor%~$CARGO_HOME/vendor~" > $CARGO_HOME/config
 
       runHook postConfigure
