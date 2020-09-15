@@ -252,8 +252,13 @@ let
     cargotomls =
       let
         readTOML = builtinz.readTOML usePureFromTOML;
+        mergedDeps = toplevelCargotoml.dependencies //
+                     (toplevelCargotoml.build-dependencies or {});
       in
-        { "." = toplevelCargotoml; } // lib.optionalAttrs isWorkspace
+        { "." = toplevelCargotoml; }
+        // (lib.mapAttrs (n: v: readTOML "${v.path}/Cargo.toml")
+              (lib.filterAttrs (n: v: v ? path) mergedDeps))
+        // (lib.optionalAttrs isWorkspace
           (
             lib.listToAttrs
               (
@@ -267,7 +272,7 @@ let
                   )
                   members
               )
-          );
+          ));
 
     # The cargo members
     members =
