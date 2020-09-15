@@ -1,4 +1,4 @@
-{ lib, libb, builtinz, arg }:
+{ lib, libb, builtinz, arg, runCommand}:
 let
   allowFun = attrs0: attrName: default:
     if builtins.hasAttr attrName attrs0 then
@@ -64,6 +64,8 @@ let
 
     # Extra `buildInputs` to all derivations.
     buildInputs = attrs0.buildInputs or [];
+
+    depCratePaths = attrs0.depCratePaths or [];
 
     # Options passed to all cargo commands, i.e. `cargo <OPTS> ...`. These
     # options can be accessed during the build through the environment variable
@@ -250,14 +252,20 @@ let
     # All cargotomls, from path to nix object
     # (attrset from directory name to Nix object)
     cargotomls =
-      let
-        readTOML = builtinz.readTOML usePureFromTOML;
-        mergedDeps = toplevelCargotoml.dependencies //
-                     (toplevelCargotoml.build-dependencies or {});
-      in
         { "." = toplevelCargotoml; }
-        // (lib.mapAttrs (n: v: readTOML "${v.path}/Cargo.toml")
-              (lib.filterAttrs (n: v: v ? path) mergedDeps))
+        // (lib.listToAttrs
+          (
+            map
+              (
+                cratePath:
+                  let cargoToml = runCommand "Cargo.toml" {buildInputs = attrs.buildInputs;} "cp -r '${cratePath}/Cargo.toml' $out";
+                  in { name = "bla";
+                       value = readTOML cargoToml;
+                  }
+              )
+              attrs.depCratePaths
+            )
+        )
         // (lib.optionalAttrs isWorkspace
           (
             lib.listToAttrs
