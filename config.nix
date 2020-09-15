@@ -259,7 +259,7 @@ let
               (
                 cratePath:
                   let cargoToml = runCommand "Cargo.toml" {buildInputs = attrs.buildInputs;} "cp -r '${cratePath}/Cargo.toml' $out";
-                  in { name = "bla";
+                  in rec { name = value.package.name;
                        value = readTOML cargoToml;
                   }
               )
