@@ -63,7 +63,7 @@ let
     nativeBuildInputs = attrs0.nativeBuildInputs or [];
 
     # Extra `buildInputs` to all derivations.
-    buildInputs = attrs0.buildInputs or [];
+    buildInputs = (attrs0.buildInputs or []) ++ depCratePaths;
 
     depCratePaths = attrs0.depCratePaths or [];
 
