@@ -221,6 +221,7 @@ let
     # Example:
     #   [ { name = "wabt", version = "2.0.6", sha256 = "..." } ]
     crateDependencies = libb.mkVersions buildPlanConfig.cargolock;
+    toplevelCargotoml = buildPlanConfig.toplevelCargotoml;
   };
 
   # config used when planning the builds
