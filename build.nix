@@ -381,7 +381,7 @@ let
         ${lib.optionalString copyTarget ''
         mkdir -p $out
         # make sure crate is built from scratch
-        rm -rvf target/*/build/${toplevelCargotoml.package.name}-*
+        rm -rf target/*/build/${toplevelCargotoml.package.name}-*
         ${if compressTarget then
         ''
           tar -c target | ${zstd}/bin/zstd -o $out/target.tar.zst
