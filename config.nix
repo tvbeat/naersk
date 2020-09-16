@@ -259,9 +259,12 @@ let
               (
                 cratePath:
                   # needed for restricted-eval in hydra
-                  let cargoToml = runCommand "Cargo.toml" {
+                  let
+                  cargoToml = runCommand "Cargo.toml" {
                     inherit (attrs) buildInputs;
-                    } "cp '${cratePath}/Cargo.toml' $out";
+                    preferLocalBuild = true;
+                    allowSubstitutes = false;
+                  } "cp '${cratePath}/Cargo.toml' $out";
                   in rec {
                     name = value.package.name;
                     value = readTOML cargoToml;
